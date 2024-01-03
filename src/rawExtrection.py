@@ -19,21 +19,10 @@ from src.Classes.Rectangle import rectangles_to_array
 from src.refineExtractions import loadRefinedRectangle
 from PIL import Image
 def extractRawRegions(filepath):
-    pages = convert_from_path(filepath, 500, poppler_path=r'poppler-23.11.0\Library\bin')
-        # Use os.path.basename to get the filename from the path
-    filename = os.path.basename(filepath)
-        # Use os.path.splitext to split the filename and extension
+    file = read_image(filepath)
+    _, filename = os.path.split(filepath)
     filename_without_extension, _ = os.path.splitext(filename)
-    output_dir = f'outputs/{filename_without_extension}/'
 
-    cretaFolderIfNeeded(output_dir)
-    Files = []
-    for count, page in enumerate(pages):
-        cretaFolderIfNeeded(f'{output_dir}/{count}/')
-        page.save(f'{output_dir}/{count}/orginal.jpg')
-        Files.append(f'{output_dir}/{count}/orginal.jpg')
-
-    
     if torch.cuda.is_available() == True:
         refine_net = load_refinenet_model(cuda=True)
         craft_net = load_craftnet_model(cuda=True)
@@ -41,50 +30,49 @@ def extractRawRegions(filepath):
         refine_net = load_refinenet_model(cuda=False)
         craft_net = load_craftnet_model(cuda=False)
     
-    for count,file in enumerate(Files):
 
-        # read image
-        image = read_image(file)
-        output_dir = f'outputs/{filename_without_extension}/{count}/'
-        cretaFolderIfNeeded(output_dir)
+    # read image
+    image = read_image(file)
+    output_dir = f'outputs/{filename_without_extension}'
+    cretaFolderIfNeeded(output_dir)
 
-        # load models
-        # perform prediction
-        if torch.cuda.is_available() == True:
-            prediction_result = get_prediction(
-                image=file,
-                craft_net=craft_net,
-                refine_net=refine_net,
-                text_threshold=0.7,
-                link_threshold=0.4,
-                low_text=0.4,
-                cuda=True,
-                long_size=1280
-            )
-        else:
-            prediction_result = get_prediction(
-                image=file,
-                craft_net=craft_net,
-                refine_net=refine_net,
-                text_threshold=0.7,
-                link_threshold=0.4,
-                low_text=0.4,
-                cuda=False,
-                long_size=1280
-            )
-        # export heatmap, detection points, box visualization
-        export_extra_results(
-            image=image,
-            regions=prediction_result["boxes"],
-            heatmaps=prediction_result["heatmaps"],
-            output_dir=output_dir,
+    # load models
+    # perform prediction
+    if torch.cuda.is_available() == True:
+        prediction_result = get_prediction(
+            image=file,
+            craft_net=craft_net,
+            refine_net=refine_net,
+            text_threshold=0.7,
+            link_threshold=0.4,
+            low_text=0.4,
+            cuda=True,
+            long_size=1280
         )
+    else:
+        prediction_result = get_prediction(
+            image=file,
+            craft_net=craft_net,
+            refine_net=refine_net,
+            text_threshold=0.7,
+            link_threshold=0.4,
+            low_text=0.4,
+            cuda=False,
+            long_size=1280
+        )
+    # export heatmap, detection points, box visualization
+    export_extra_results(
+        image=image,
+        regions=prediction_result["boxes"],
+        heatmaps=prediction_result["heatmaps"],
+        output_dir=output_dir,
+    )
     # unload models from gpu
     empty_cuda_cache()
     os.remove(filepath)
-    print(f"Thread for {filename_without_extension} finished")
+    print(f"Thread for {filename} finished")
 
-    return  f'outputs/{filename_without_extension}/'
+    return  output_dir
 
 def cretaFolderIfNeeded(folder_path):
     if os.path.exists(folder_path)== False:

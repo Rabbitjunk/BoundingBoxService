@@ -12,7 +12,7 @@ app.config['SECRET_KEY'] = 'your_secret_key'
 
 
 @app.route("/process", methods=['POST'])
-async def process():
+def process():
     if 'file' not in request.files:
         flash('No file part')
         return redirect(request.url)
@@ -28,11 +28,9 @@ async def process():
         os.makedirs(f"{app.config['UPLOAD_FOLDER']}")
     file.save(f"{app.config['UPLOAD_FOLDER']}/{filename}")
 
-    # Verarbeite die Datei asynchron
-    thread = Thread(target=process_file, args=(f"{app.config['UPLOAD_FOLDER']}/{filename}",))
-    thread.start()
-    print(f"Thread for {filename} startet")
-    return "success"
+    #Verarbeite die Datei asynchron
+    resultJson =process_file(f"{app.config['UPLOAD_FOLDER']}/{filename}")
+    return resultJson
 
     
 

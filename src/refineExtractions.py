@@ -9,11 +9,7 @@ from src.Classes.Rectangle import Point, Rectangle, deserialize_rectangles, seri
 
 def refineRegions(filepath):
     if os.path.exists(filepath):
-        inhalt = os.listdir(filepath)
-        allRectangles=[]
-        for element in inhalt:
-            element_pfad = os.path.join(filepath, element)
-            allRectangles =loadRawRectangle(element_pfad)
+            allRectangles =loadRawRectangle(filepath)
             refinedRectangles=[]
             tempRectangleGroup =[]
             refinedRectangles = combineRowRectangles(allRectangles)
@@ -22,9 +18,7 @@ def refineRegions(filepath):
             if  len(tempRectangleGroup)>0:
                 refinedRectangles.append(combineRectangles(tempRectangleGroup))
 
-            with open(os.path.join(element_pfad + "/refined_rectangles.json"), 'w') as datei:
-                json_data = json.dumps(serialize_rectangles(refinedRectangles), indent=2)
-                datei.write(json_data)
+            return  json.dumps(serialize_rectangles(refinedRectangles), indent=2)
     else:
         print("Filepath empty")
 
